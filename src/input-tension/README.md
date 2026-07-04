@@ -1,5 +1,13 @@
 # coin-bettor
 
+> **ELI5:** an agent watches a biased coin flip by flip and learns *when* to bet and *which way*;
+> its "decision dial" snowballs until it runs away to heads or tails.
+> **Genuinely new:** makes the tension idea **trainable on a task** (REINFORCE over a runaway
+> accumulator).
+> **Useful? / advantage:** Reaches ~Bayes-optimal — but **no advantage**, because a plain running
+> tally does just as well. A coin has a sufficient statistic, so it only learns to *lean*, never to
+> *hold*. This is exactly why later stages switch to tasks where holding is mandatory. (Stage 1.)
+
 A reinforcement-learning agent that watches a biased coin and learns *when* and *which way*
 to bet — where committing is a genuine **runaway collapse**, not a discrete action. This is
 the trainable version of the tension idea: a decision that stays indecisive until evidence

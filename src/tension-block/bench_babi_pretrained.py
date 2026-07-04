@@ -24,11 +24,29 @@ Run:  python3 bench_babi_pretrained.py     (expects data/ from the bAbI tar; see
 import torch
 import torch.nn.functional as F
 from transformers import AutoTokenizer
+import bench_glue as bg
 from bench_glue import EarlyExitTension, train, measure_throughput, BACKBONE, THRESHOLDS
 from bench_babi import parse, BASE, FILES
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-MAXLEN = 256
+
+# The GPU hard-powers-off this machine under load (vendor-locked, can't cap power) -> run on CPU.
+# CPU draw is lower and steadier, so no power spike; no cooldowns needed. Still checkpoint densely
+# so any interruption loses <50 steps (runs/babi_qa123.pt).
+if DEVICE == "cpu":
+    MAXLEN = 160
+    bg.BATCH = 32
+    bg.EPOCHS = 2
+    bg.CKPT_EVERY = 50
+    bg.COOLDOWN_EVERY = 0
+else:
+    # --- GPU power-spike mitigations (kept for reference; GPU currently unusable here) ---
+    MAXLEN = 224
+    bg.BATCH = 8
+    bg.EPOCHS = 2
+    bg.CKPT_EVERY = 50
+    bg.COOLDOWN_EVERY = 50
+    bg.COOLDOWN_SECS = 4
 
 
 def load(dev):
@@ -98,7 +116,7 @@ def main():
 
     model = EarlyExitTension(n_cls=n_cls).to(dev)
     print("training...", flush=True)
-    train(model, tr, dev)
+    train(model, tr, dev, ckpt="runs/babi_qa123.pt")
     evaluate(model, te, dev)
 
 

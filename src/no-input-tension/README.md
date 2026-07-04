@@ -1,5 +1,13 @@
 # tension-machine
 
+> **ELI5:** a tiny brain with *no input* that can't dither forever — the longer it stays on the
+> fence, the more the floor tilts, until it's forced to fall to one side at a moment we predict
+> with a formula.
+> **Genuinely new:** turns "indecision forces a choice under a deadline" into exact physics (a
+> pitchfork bifurcation); predicted snap time ~19.7 matches the observed ~20.9.
+> **Useful? / advantage:** Concept demo only — no task, no baseline, beats nothing. It proves the
+> *phenomenon* the project is built on. (Stage 0 — see the [project map](../../README.md).)
+
 Inputless, self-driven neural dynamics. No dataset, no input — these models produce
 behavior purely from their own internal weights evolving on a **tension landscape**.
 The "result" isn't an accuracy number; it's the *dynamics*, which you watch in plots.

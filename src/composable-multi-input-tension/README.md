@@ -1,5 +1,13 @@
 # tension-operator
 
+> **ELI5:** two clues (one about the row, one about the column of a grid) arrive at *different
+> times*; the operator must **say nothing (output all zeros) until both have arrived**, then snap
+> to the one correct cell.
+> **Genuinely new:** the first time **holding is mandatory** — committing early is structurally
+> wrong — and the operator emits a literal **zero vector** while it waits.
+> **Useful? / advantage:** Concept win (~0.99). Shows the hold-then-snap mechanism works and would
+> compose inside a bigger network; no benchmark advantage yet. (Stage 2.)
+
 A deliberation operator that breaks the assumption **one forward pass = one output**. It
 holds an internal tension across many forward passes -- emitting the **zero vector**
 (nothing) while it deliberates internally -- and then **snaps** to a single clean symbol

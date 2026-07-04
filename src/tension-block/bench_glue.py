@@ -23,6 +23,7 @@ Claims under test (the same shape as the coin benchmark, now on real data):
 Run:  python3 bench_glue.py
 """
 import math
+import os
 import time
 import torch
 from torch import nn
@@ -39,6 +40,9 @@ LR = 3e-5
 HALT_W = 0.5
 THRESHOLDS = [0.5, 0.7, 0.85, 0.95, 0.99]
 LOG_EVERY = 400
+CKPT_EVERY = 100        # save a resumable checkpoint this often (thermal-shutdown insurance)
+COOLDOWN_EVERY = 100    # let the GPU idle briefly to keep temperatures down
+COOLDOWN_SECS = 4
 
 
 def load_data(dev):
@@ -74,12 +78,35 @@ class EarlyExitTension(nn.Module):
         return torch.stack(logits), torch.stack(halts)    # (L,B,2), (L,B)
 
 
-def train(model, tr, dev):
+def train(model, tr, dev, ckpt=None):
+    """Train the early-exit model. If `ckpt` is given, periodically save model/opt/step/RNG and
+    resume from it on the next launch -- so a thermal shutdown mid-run continues instead of
+    restarting. Re-running after a completed run loads the trained model and skips straight
+    through (lets the downstream eval/throughput run without retraining)."""
     opt = torch.optim.AdamW(model.parameters(), lr=LR)
     n = tr["y"].shape[0]
     steps = EPOCHS * (n // BATCH)
+    start = 0
+    if ckpt and os.path.exists(ckpt):
+        ck = torch.load(ckpt, map_location=dev)
+        model.load_state_dict(ck["model"]); opt.load_state_dict(ck["opt"])
+        torch.set_rng_state(ck["rng"].cpu())
+        if dev.type == "cuda" and ck.get("rng_cuda") is not None:
+            torch.cuda.set_rng_state(ck["rng_cuda"].cpu())
+        start = ck["it"] + 1
+        print(f"  resumed from {ckpt} at step {start}/{steps}", flush=True)
+
+    def save(it):
+        if not ckpt:
+            return
+        os.makedirs(os.path.dirname(ckpt) or ".", exist_ok=True)
+        torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "it": it,
+                    "rng": torch.get_rng_state(),
+                    "rng_cuda": torch.cuda.get_rng_state() if dev.type == "cuda" else None},
+                   ckpt)
+
     model.train()
-    for it in range(steps):
+    for it in range(start, steps):
         idx = torch.randint(0, n, (BATCH,), device=dev)
         ids, mask, y = tr["ids"][idx], tr["mask"][idx], tr["y"][idx]
         logits, halts = model(ids, mask)                  # (L,B,C),(L,B)
@@ -93,6 +120,13 @@ def train(model, tr, dev):
         opt.zero_grad(); loss.backward(); opt.step()
         if it % LOG_EVERY == 0:
             print(f"  step {it:5d}/{steps}  ce {ce.item():.3f}  bce {bce.item():.3f}", flush=True)
+        if ckpt and CKPT_EVERY and it and it % CKPT_EVERY == 0:
+            save(it)
+        if COOLDOWN_EVERY and it and it % COOLDOWN_EVERY == 0:
+            if dev.type == "cuda":
+                torch.cuda.synchronize()
+            time.sleep(COOLDOWN_SECS)
+    save(steps - 1)
     return model
 
 
@@ -188,7 +222,7 @@ def main():
 
     model = EarlyExitTension().to(dev)
     print(f"params {sum(p.numel() for p in model.parameters())}\ntraining...", flush=True)
-    train(model, tr, dev)
+    train(model, tr, dev, ckpt="runs/glue_sst2.pt")
     fixedK, curve = evaluate(model, va, dev)
 
     L = len(fixedK)

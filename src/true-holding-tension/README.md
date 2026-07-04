@@ -1,5 +1,12 @@
 # tension
 
+> **ELI5:** two clues each narrow the answer to a *diagonal line* on a grid; the real answer is
+> where the two lines **cross** — a cell that sits on *neither* clue's line.
+> **Genuinely new:** the answer is a **third thing** (a synthesis, not a pick); an ablation proves
+> it — blind one clue and accuracy collapses to chance.
+> **Useful? / advantage:** Concept win (~0.99). Proves the operator computes a real synthesis, not
+> a memorized lookup table; still no benchmark. (Stage 3.)
+
 A **TensionOperator**: a small recurrent unit that deliberates *across* forward
 passes without emitting anything, holds an internal tension, and emits a single
 symbol only when it resolves. The point is to break the assumption that one forward

@@ -1,5 +1,13 @@
 # synth — holding that resolves into a third thing
 
+> **ELI5:** two opposite votes cancel out, so the answer can't sit between them — it swings **90°
+> off to the side** to a perpendicular third thing. v2 also hides *when* to stop and makes one clue
+> arrive late, so the operator is forced to wait for missing information.
+> **Genuinely new:** it **owns its own timing with no clock** — it commits when its internal field
+> comes to *rest*, and that moment tracks when the late clue arrives (corr **0.98**).
+> **Useful? / advantage:** The cleanest *concept* result — the strongest evidence it genuinely
+> holds and self-times. Still synthetic, no benchmark advantage. (Stage 4.)
+
 Angular synthesis task. Two poles A, B (unit vectors). Evidence ("votes") arrives over
 time. Three regimes:
 
